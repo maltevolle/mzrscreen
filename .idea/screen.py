@@ -1,5 +1,7 @@
 import pygame
 import sys
+from moviepy.editor import VideoFileClip
+from pygame.locals import *
 
 # Initialisieren von Pygame
 pygame.init()
@@ -37,12 +39,11 @@ messages = [
 ]
 
 videos = [
-    "Video 1 abspielen",
-    "Video 2 abspielen",
-    "Video 3 abspielen",
-    "Video 4 abspielen",
-    "Video 5 abspielen",
-    "Nächstes Video abspielen"
+    "test.mp4",
+    "test.mp4",
+    "test.mp4",
+    "test.mp4",
+    "test.mp4",
 ]
 
 # Bild für die letzte Seite
@@ -61,8 +62,16 @@ def draw_message(screen, message, font, x, y):
     text_surface = font.render(message, True, black)
     screen.blit(text_surface, (x, y))
 
-def play_video(video):
-    print(f"Abspielen von '{video}'")  # Hier könnte der Code zum Abspielen des Videos stehen
+def play_video(video_path):
+    clip = VideoFileClip(video_path)
+
+    # Konvertiere das Video in Pygame-Oberflächen
+    for frame in clip.iter_frames(fps=24, dtype='uint8'):
+        frame_surface = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
+        frame_surface = pygame.transform.scale(frame_surface, (clip.h // 3, clip.w // 3))  # Framegröße anpassen
+        screen.blit(frame_surface, ((screen_width - frame_surface.get_width()) // 2, (screen_height - frame_surface.get_height()) // 2))
+        pygame.display.update()
+        pygame.time.delay(int(1000 / 30))  # 30 FPS
 
 def main():
     global current_page_index
@@ -101,8 +110,10 @@ def main():
                 button_current_color = button_color
             draw_button(screen, button_x, button_y, button_width, button_height, button_current_color, button_text_continue, button_font)
 
-        if current_page_index >= 0 and current_page_index < len(messages):
+        if current_page_index >= 0 and current_page_index < len(messages) :
             draw_message(screen, messages[current_page_index], button_font, 20, 20)  # Nachricht oben links
+            if current_page_index < len(messages) -1:
+                play_video(videos[current_page_index])  # Video für die aktuelle Nachricht abspielen
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -115,11 +126,8 @@ def main():
                     # Weiter zur ersten Seite
                     current_page_index = 0
                 else:
-                    if button_x < mouse_x < button_x + button_width and button_y < mouse_y < button_y + button_height:
-                        # Weiter zum nächsten Schritt
-                        current_page_index += 1
-                        # Führe die zugehörige Aktion aus
-                        play_video(videos[current_page_index])
+                    # Weiter zum nächsten Schritt
+                    current_page_index += 1
 
         pygame.display.flip()
 
